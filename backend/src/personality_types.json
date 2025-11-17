@@ -1,0 +1,32 @@
+[
+  {
+    "name": "개방성",
+    "key": "Openness",
+    "icon": "🎨",
+    "description": "도전과 아이디어를 추구하는"
+  },
+  {
+    "name": "성실성",
+    "key": "Conscientiousness",
+    "icon": "⚙️",
+    "description": "목표 앞에서는 집중하지만, 때로는 자유로운"
+  },
+  {
+    "name": "외향성",
+    "key": "Extraversion",
+    "icon": "⭐",
+    "description": "사람들과 어울리는 에너지가 넘치는"
+  },
+  {
+    "name": "친화성",
+    "key": "Agreeableness",
+    "icon": "🤝",
+    "description": "배려와 신뢰로 관계를 만드는"
+  },
+  {
+    "name": "신경성",
+    "key": "Neuroticism",
+    "icon": "💭",
+    "description": "가끔 신중해지는 섬세한"
+  }
+]
