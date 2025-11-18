@@ -9,7 +9,8 @@ PERSON_CLASS_NAMES = ["사람전체", "머리", "얼굴", "눈", "코", "입", "
 
 def get_analysis_result(user_choice, txt_file_path, image_path):
     """
-    사용자 선택, TXT 파일, 이미지 경로를 받아 분석 문장을 반환하는 함수
+    사용자 선택, TXT 파일, 이미지 경로를 받아 
+    [파일이름, 분석데이터, 카운트, 최종문장]을 딕셔너리로 반환하는 함수
     """
     
     analysis_results = {
@@ -34,7 +35,7 @@ def get_analysis_result(user_choice, txt_file_path, image_path):
 
         raw_data = []
         if not os.path.exists(txt_file_path):
-            return "오류: 분석 결과 파일(test_analysis.txt)을 찾을 수 없습니다."
+            return {"error": f"오류: 분석 결과 파일({txt_file_path})을 찾을 수 없습니다."}
 
         with open(txt_file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
@@ -45,28 +46,27 @@ def get_analysis_result(user_choice, txt_file_path, image_path):
 
         for line in lines:
             parts = line.strip().split()
-            if len(parts) >= 6:
+            if len(parts) >= 5:
                 cls_id = int(parts[0])
-                cx, cy, w, h = map(float, parts[1:5]) 
-                conf = float(parts[5])
+                cx, cy, w, h = map(float, parts[1:5])
                 
-                if conf >= 0.8:
-                    if 0 <= cls_id < len(current_class_names):
-                        name = current_class_names[cls_id]
-                    else:
-                        name = f"Unknown_{cls_id}"
-                    
-                    obj = {
-                        "name": name,
-                        "confidence": conf,
-                        "xmin": cx - (w/2), "ymin": cy - (h/2), 
-                        "xmax": cx + (w/2), "ymax": cy + (h/2),
-                        "w": w, "h": h
-                    }
-                    raw_data.append(obj)
+                if 0 <= cls_id < len(current_class_names):
+                    name = current_class_names[cls_id]
+                else:
+                    name = f"Unknown_{cls_id}"
+
+                obj = {
+                    "name": name,
+                    "xmin": cx - (w/2), "ymin": cy - (h/2), 
+                    "xmax": cx + (w/2), "ymax": cy + (h/2),
+                    "w": w, "h": h
+                }
+                raw_data.append(obj)
 
         target_key = ['house', 'tree', 'person'][user_choice]
         all_model_results[target_key] = raw_data
+
+        final_sentence_string = ""
 
         if user_choice == 0 and 'house' in all_model_results:
             for det in all_model_results['house']:
@@ -98,32 +98,6 @@ def get_analysis_result(user_choice, txt_file_path, image_path):
             for det in all_model_results['house']:
                 if det['name'] in house_counts: house_counts[det['name']] += 1
 
-        if user_choice == 1 and 'tree' in all_model_results:
-            for det in all_model_results['tree']:
-                if det['name'] == '나무전체':
-                    ratio = det['w'] * det['h']
-                    if ratio > 0.5: size = '보통'
-                    else: size = '작다'
-                    analysis_results['trees'].append({"size": size})
-
-            for det in all_model_results['tree']:
-                if det['name'] in tree_counts: tree_counts[det['name']] += 1
-
-        if user_choice == 2 and 'person' in all_model_results:
-            for det in all_model_results['person']:
-                if det['name'] == '사람전체':
-                    h_ratio = det['h']
-                    if h_ratio >= (2/3): size = '크다'
-                    elif h_ratio <= (1/3): size = '작다'
-                    else: size = '보통'
-                    analysis_results['persons'].append({"size": size})
-
-            for det in all_model_results['person']:
-                if det['name'] in person_counts: person_counts[det['name']] += 1
-
-        final_sentence_string = ""
-        
-        if user_choice == 0:
             if analysis_results["house"]["size"]:
                 key = "크다" if analysis_results["house"]["size"] == "크다" else "크지 않다"
                 sentence = House_rules["집전체"]["크기"].get(key)
@@ -150,7 +124,17 @@ def get_analysis_result(user_choice, txt_file_path, image_path):
                     else: sentence = None
                 if sentence: final_sentence_string += sentence + " "
 
-        elif user_choice == 1:
+        elif user_choice == 1 and 'tree' in all_model_results:
+            for det in all_model_results['tree']:
+                if det['name'] == '나무전체':
+                    ratio = det['w'] * det['h']
+                    if ratio > 0.5: size = '보통'
+                    else: size = '작다'
+                    analysis_results['trees'].append({"size": size})
+
+            for det in all_model_results['tree']:
+                if det['name'] in tree_counts: tree_counts[det['name']] += 1
+
             for tree in analysis_results["trees"]:
                 key = tree["size"]
                 sentence = Tree_rules["나무전체"]["크기"].get(key)
@@ -161,12 +145,22 @@ def get_analysis_result(user_choice, txt_file_path, image_path):
                 if item == "다람쥐" and tree_counts.get("새", 0) > 0: continue
                 
                 key = "있다" if count > 0 else "없다"
-                
                 if item in Tree_rules and "유무" in Tree_rules[item]:
                     sentence = Tree_rules[item]["유무"].get(key)
                     if sentence: final_sentence_string += sentence + " "
 
-        elif user_choice == 2:
+        elif user_choice == 2 and 'person' in all_model_results:
+            for det in all_model_results['person']:
+                if det['name'] == '사람전체':
+                    h_ratio = det['h']
+                    if h_ratio >= (2/3): size = '크다'
+                    elif h_ratio <= (1/3): size = '작다'
+                    else: size = '보통'
+                    analysis_results['persons'].append({"size": size})
+
+            for det in all_model_results['person']:
+                if det['name'] in person_counts: person_counts[det['name']] += 1
+
             for person in analysis_results["persons"]:
                 key = person["size"]
                 sentence = Person_rules["사람전체"]["크기"].get(key)
@@ -194,7 +188,38 @@ def get_analysis_result(user_choice, txt_file_path, image_path):
                 
                 if sentence: final_sentence_string += sentence + " "
 
+        selected_counts = {}
+        if user_choice == 0: selected_counts = house_counts
+        elif user_choice == 1: selected_counts = tree_counts
+        elif user_choice == 2: selected_counts = person_counts
+
+        final_result_data = {
+            "filename": os.path.basename(txt_file_path), # 1. 읽어온 txt 파일 이름
+            "analysis_results": analysis_results,        # 2. 크기/위치 등 분석 정보
+            "counts": selected_counts,                   # 3. 카운트 정보 (해당 모델)
+            "result_text": final_sentence_string.strip() # 4. 최종 문장
+        }
+
         return final_sentence_string.strip()
 
     except Exception as e:
-        return f"오류 발생: {str(e)}"
+        return {"error": f"오류 발생: {str(e)}"}
+
+# -------------------------------------------------------
+# 실행 예시 (Console 출력 확인용)
+# -------------------------------------------------------
+if __name__ == "__main__":
+    # 1. 테스트할 파일 경로 설정 (현재 폴더에 있다고 가정)
+    test_txt_path = "txt_file_path.txt"
+    test_img_path = "나무_7_남_00367.jpg" # (이미지가 없어도 작동은 합니다)
+    
+    # 2. 사용자 선택 (0: 집, 1: 나무, 2: 사람)
+    test_choice = 1 
+    
+    print(f"--- 테스트 시작: {test_txt_path} (모드: {test_choice}) ---")
+
+    # 3. 함수 호출
+    result = get_analysis_result(test_choice, test_txt_path, test_img_path)
+    
+    # 4. 결과 출력 (한글 깨짐 방지 및 들여쓰기 적용)
+    print(json.dumps(result, indent=4, ensure_ascii=False))
