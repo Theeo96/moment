@@ -173,4 +173,4 @@ if __name__ == "__main__":
     except FileNotFoundError as e:
         print(f"오류: {e}")
     except Exception as e:
-        print(f"오류: {e}")
+        print(f"오류: {e}") 
