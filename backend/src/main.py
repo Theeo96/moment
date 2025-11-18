@@ -2,6 +2,7 @@ import asyncio
 import os
 import shutil
 import subprocess
+import sys
 import uuid
 from pathlib import Path
 from typing import Dict
@@ -11,8 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
-# 분석 모듈 경로 고정
+# 분석 모듈 경로 고정.
 BASE_DIR = Path(__file__).resolve().parent
+# Python 모듈 검색 경로에 현재 디렉토리 추가
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 os.chdir(BASE_DIR)
 
 UPLOAD_DIR = BASE_DIR / "uploads"
@@ -147,7 +151,7 @@ def _process(image_path: Path, label_path: Path, category: int) -> dict:
 async def analyze_image(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(...),
-    category: int = Form(...),
+    category: str = Form(...),
 ):
     if category not in (0, 1, 2):
         raise HTTPException(
@@ -158,6 +162,7 @@ async def analyze_image(
     saved_image = _save_upload_file(image)
 
     try:
+        category = int(category)
         label_path = await asyncio.to_thread(_run_yolo, saved_image, category)
         result = await asyncio.to_thread(_process, saved_image, label_path, category)
     except HTTPException:
