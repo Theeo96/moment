@@ -153,29 +153,40 @@ async def analyze_image(
     image: UploadFile = File(...),
     category: str = Form(...),
 ):
-    if category not in (0, 1, 2):
+    # 1. 먼저 숫자로 변환 시도
+    try:
+        category_int = int(category)
+    except (ValueError, TypeError):
         raise HTTPException(
-            status_code=HTTP_400_BAD_REQUEST,
-            detail="category 값은 0(집), 1(나무), 2(사람) 중 하나여야 합니다.",
+            status_code=400,
+            detail="category는 숫자(0, 1, 2)만 가능합니다."
+        )
+
+    # 2. 유효한 값인지 확인
+    if category_int not in (0, 1, 2):
+        raise HTTPException(
+            status_code=400,
+            detail="category 값은 0(집), 1(나무), 2(사람) 중 하나여야 합니다."
         )
 
     saved_image = _save_upload_file(image)
 
     try:
-        category = int(category)
-        label_path = await asyncio.to_thread(_run_yolo, saved_image, category)
-        result = await asyncio.to_thread(_process, saved_image, label_path, category)
+        label_path = await asyncio.to_thread(_run_yolo, saved_image, category_int)
+        result = await asyncio.to_thread(_process, saved_image, label_path, category_int)
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(
-            status_code=HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
+            status_code=500,
+            detail=f"분석 중 오류 발생: {str(exc)}",
         ) from exc
     finally:
-        background_tasks.add_task(
-            _cleanup_paths, [saved_image, label_path.parent.parent if 'label_path' in locals() else None]
-        )
+        # label_path가 정의됐는지 안전하게 확인
+        cleanup_paths = [saved_image]
+        if 'label_path' in locals() and label_path and hasattr(label_path, 'parent'):
+            cleanup_paths.append(label_path.parent.parent)
+        background_tasks.add_task(_cleanup_paths, cleanup_paths)
 
     return JSONResponse(result)
 
