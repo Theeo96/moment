@@ -12,6 +12,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # 분석 모듈 경로 고정.
 BASE_DIR = Path(__file__).resolve().parent
 # Python 모듈 검색 경로에 현재 디렉토리 추가
