@@ -83,7 +83,7 @@ def _build_yolo_command(image_path: Path, category: int, run_name: str) -> list[
         "save_txt=True",
         f"project={YOLO_OUTPUT_DIR}",
         f"name={run_name}",
-        "exist_ok=True",
+        "exist_ok=False", # 251118 1634 "exist_ok=True"
         "half=True",
     ]
 
