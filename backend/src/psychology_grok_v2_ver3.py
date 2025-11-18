@@ -59,10 +59,10 @@ def analyze_personality(input_text):
 
 {input_text}
 
-분석하여 성격 5요인 중 하나로 분류 및 설명,
+분석하여 성격 5요인 중 하나로 분류 및 설명, 분류 결과에 대한 일관성을 유지하며 아랫단을 출력함
 - 첫줄 요약 2줄
 - 상세 해석 7줄
-- 유형별 조언 3개(아이콘 포함)
+- 유형별 조언 3개(긍정적인 아이콘 포함)
 - 신경성 결과면 권고 메시지도 출력
 """
     chat_session.append(user(user_message))
