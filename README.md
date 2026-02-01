@@ -3,6 +3,7 @@
 HTP(House-Tree-Person) 그림 검사를 통한 심리 분석 서비스
 
 참고문헌 : https://daegu.dcollection.net/public_resource/pdf/000002419228_20260202004021.pdf
+
 (모바일 기반 HTP그림검사 앱 개발을 위한 표준화 연구 - 손성희)
 
 ## 📋 목차
